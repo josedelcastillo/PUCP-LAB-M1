@@ -1,12 +1,35 @@
+# Byte-compiled / cache
 __pycache__/
 *.py[cod]
+*$py.class
+
+# Entornos virtuales
 .venv/
 venv/
+env/
+.env
+
+# Distribución / empaquetado
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tests y cobertura
 .pytest_cache/
-.ruff_cache/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
+
+# Herramientas
+.ruff_cache/
+.mypy_cache/
+
+# IDE / SO
+.idea/
+.vscode/
+.DS_Store
+
+# Artefactos generados
 site/
-*.egg-info/
-.env

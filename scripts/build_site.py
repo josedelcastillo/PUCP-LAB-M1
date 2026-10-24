@@ -9,6 +9,7 @@ from pathlib import Path
 PROJECT_NAME = "PUCP-LAB-M1"
 
 BACKGROUNDS = {
+    "local": "#1e3a8a",
     "staging": "#6b7280",
     "production": "#15803d",
 }

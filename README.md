@@ -1,75 +1,83 @@
 # PUCP-LAB-M1
 
-API de inventario en memoria construida con **FastAPI** (Python 3.12).
+API de inventario en memoria construida con FastAPI y Python 3.12.
 
-## Endpoints
+## Qué hace la API
 
-| Método | Ruta                       | Descripción                                                      |
-|--------|----------------------------|------------------------------------------------------------------|
-| GET    | `/health`                  | Estado del servicio → `{"status": "ok"}`                         |
-| GET    | `/items`                   | Lista de items `{id, name, qty}`                                 |
-| POST   | `/items/{id}/withdraw`     | Body `{"qty": int}`. Descuenta stock. `400` sin stock, `404` si no existe |
-| GET    | `/version`                 | `{"version": APP_VERSION or "dev", "env": APP_ENV or "local"}`   |
-| GET    | `/debug/config`            | Configuración activa del servicio                                |
+Mantiene una lista de items en memoria y permite consultar y retirar stock.
 
-## Variables de entorno
+| Método | Ruta                    | Descripción                                                       |
+|--------|-------------------------|-------------------------------------------------------------------|
+| GET    | `/health`               | Estado del servicio: `{"status": "ok"}`                           |
+| GET    | `/items`                | Lista de items con `id`, `name` y `qty`                           |
+| POST   | `/items/{id}/withdraw`  | Retira stock. Body: `{"qty": 3}`. Responde 400 si no hay stock suficiente y 404 si el item no existe |
+| GET    | `/version`              | Versión y entorno: `{"version": "...", "env": "..."}`             |
+| GET    | `/debug/config`         | Configuración activa del servicio                                 |
 
-| Variable             | Uso                                         | Default |
-|----------------------|---------------------------------------------|---------|
-| `APP_VERSION`        | Versión reportada por `/version`            | `dev`   |
-| `APP_ENV`            | Entorno reportado por `/version`            | `local` |
-| `NOTIFY_WEBHOOK_URL` | Webhook que recibe alertas de stock bajo    | —       |
+Variables de entorno:
 
-## Estructura
+| Variable             | Uso                                          | Valor por defecto |
+|----------------------|----------------------------------------------|-------------------|
+| `APP_VERSION`        | Versión que reporta `/version`               | `dev`             |
+| `APP_ENV`            | Entorno que reporta `/version`               | `local`           |
+| `NOTIFY_WEBHOOK_URL` | URL que recibe un aviso cuando el stock baja | sin definir       |
 
-```
-app/
-  main.py        # rutas FastAPI
-  inventory.py   # lógica de inventario
-  config.py      # configuración
-  notify.py      # alertas de stock bajo vía webhook
-  version.py     # versión y entorno
-tests/
-  test_api.py
-scripts/
-  build_site.py  # genera el sitio estático en site/
-```
+La documentación interactiva queda disponible en `http://localhost:8000/docs`.
 
-## Desarrollo local
+## Cómo correrla en local
+
+Requisitos: Python 3.12 y `make`.
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-uvicorn app.main:app --reload
-# http://localhost:8000/docs
+make install   # crea .venv e instala dependencias
+make run       # levanta uvicorn con recarga en http://localhost:8000
 ```
 
-## Calidad
+Ejemplo:
 
 ```bash
-pytest --cov=app --cov-report=term-missing   # tests + cobertura
-ruff check .                                 # lint
-ruff format --check .                        # formato
-bandit -c pyproject.toml -r app              # análisis estático de seguridad
-pip-audit -r requirements.txt                # vulnerabilidades en dependencias
-pre-commit install                           # hooks locales
+curl http://localhost:8000/items
+curl -X POST http://localhost:8000/items/1/withdraw \
+  -H "Content-Type: application/json" -d '{"qty": 2}'
 ```
 
-## Contenedor
+También se puede abrir el repositorio en un Dev Container: el entorno ejecuta `make install` al crearse y expone el puerto 8000.
+
+Otros comandos disponibles:
+
+| Comando             | Descripción                                          |
+|---------------------|------------------------------------------------------|
+| `make lint`         | Revisa estilo y formato con ruff                     |
+| `make docker-build` | Construye la imagen de contenedor                    |
+| `make site`         | Genera una página estática con la versión en `site/` |
+
+## Cómo correr los tests
 
 ```bash
-docker build --build-arg APP_VERSION=v0.1.0 -t pucp-lab-m1 .
-docker run --rm -p 8000:8000 -e APP_ENV=staging pucp-lab-m1
+make test
 ```
 
-## Sitio estático
+Ejecuta pytest sobre `tests/` y muestra el reporte de cobertura del paquete `app/`.
 
-```bash
-python scripts/build_site.py --version v1.0.0 --env staging
-python scripts/build_site.py --version v1.0.0 --env production
+## Estructura del repositorio
+
 ```
-
-Genera `site/index.html` y `site/version.json`.
+.
+├── app/
+│   ├── main.py          # definición de rutas FastAPI
+│   ├── inventory.py     # lógica del inventario
+│   ├── config.py        # parámetros de configuración
+│   ├── notify.py        # avisos de stock bajo vía webhook
+│   └── version.py       # versión y entorno
+├── tests/
+│   └── test_api.py      # tests de la API
+├── scripts/
+│   └── build_site.py    # generador de la página estática
+├── .devcontainer/
+│   └── devcontainer.json
+├── Dockerfile
+├── Makefile
+├── pyproject.toml       # configuración de ruff y pytest
+├── requirements.txt
+└── requirements-dev.txt
+```
